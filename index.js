@@ -46,6 +46,8 @@ const subtitle = chalk.bold.cyanBright('A CLI tool to compile selected files int
 const version = chalk.bold(`Version: ${pkg.version}`);
 const author = chalk.bold(`Author: ${pkg.author || 'Mahendra'}`);
 const now = chalk.gray('Date: ' + new Date().toLocaleString());
+const betaLabel = chalk.bgYellow.black.bold('  BETA  ');
+console.log(betaLabel.padStart(10));
 console.log(border);
 console.log(gradient.pastel.multiline(jympBanner));
 console.log(acronymHorizontal);
