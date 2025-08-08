@@ -47,7 +47,8 @@ const manualFilePicker = async () => {
       type: 'checkbox',
       name: 'selected',
       message: 'Select files to include:',
-      choices: files
+      choices: files,
+      pageSize: 30 // Show more file rows
     }
   ]);
   return selected;
@@ -72,10 +73,17 @@ const aiBasedSelector = async () => {
 // Read and format selected files
 const combineFiles = async (files) => {
   let result = '';
+  // List of image file extensions
+  const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp', '.tiff', '.ico'];
   for (const file of files) {
-    const content = await fs.readFile(file, 'utf-8');
+    const ext = path.extname(file).toLowerCase();
     result += `\n// -------- ${file} --------\n`;
-    result += content + '\n';
+    if (imageExtensions.includes(ext)) {
+      result += `[Image file: ${path.basename(file)}]\n`;
+    } else {
+      const content = await fs.readFile(file, 'utf-8');
+      result += content + '\n';
+    }
   }
   return result;
 };
