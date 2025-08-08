@@ -247,6 +247,61 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
+// Prompt-based (AI-assisted) file selector using OpenRouter API
+const aiBasedSelector = async () => {
+  const files = await getAllFiles();
+  const { userPrompt } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'userPrompt',
+      message: chalk.cyan('Enter your goal (e.g., I want to debug an auth issue):'),
+    }
+  ]);
+
+  // Prepare the prompt for the AI
+  const fileList = files.map(f => `- ${f}`).join('\n');
+  const systemPrompt = `You are an expert code assistant. Given a user goal and a list of files, select the most relevant files (max 10) by returning only their file names, one per line.\n\nUser goal: ${userPrompt}\n\nFiles:\n${fileList}\n\nRelevant files:`;
+
+  // Call OpenRouter API (OpenAI-compatible)
+  const fetch = (await import('node-fetch')).default;
+  let aiResponse = '';
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer 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'
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-3.5-turbo-instruct',
+        messages: [
+          { role: 'system', content: 'You are an expert code assistant.' },
+          { role: 'user', content: systemPrompt }
+        ],
+        max_tokens: 256,
+        temperature: 0.2
+      })
+    });
+    const data = await res.json();
+    aiResponse = data.choices?.[0]?.message?.content || '';
+  } catch (e) {
+    console.log(chalk.red('AI API error, falling back to manual matching.'));
+  }
+
+  // Parse AI response for file names
+  let selected = [];
+  if (aiResponse) {
+    const lines = aiResponse.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    selected = files.filter(f => lines.some(l => f.endsWith(l)));
+  }
+  // Fallback: simple keyword match or first 5 files
+  if (!selected.length) {
+    selected = files.filter(f => userPrompt.toLowerCase().split(' ').some(word => f.toLowerCase().includes(word)));
+    if (!selected.length) selected = files.slice(0, 5);
+  }
+  return selected;
+};
+
 // Add a stub for aiBasedSelector if not present
 if (typeof aiBasedSelector !== 'function') {
   globalThis.aiBasedSelector = async () => {
