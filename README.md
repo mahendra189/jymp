@@ -1,8 +1,11 @@
 # JYMP
 
+![BETA](https://img.shields.io/badge/status-BETA-yellow?style=flat-square)
+[![npm version](https://img.shields.io/npm/v/jymp?color=blue)](https://www.npmjs.com/package/jymp)
+
 <img src="assets/logo.png" alt="JYMP Logo" width="80" height="80" />
 
-> **JYMP** (Join Your Multiple Prompts) is a beautiful, interactive CLI tool to combine selected files from your codebase into a single prompt for LLMs, code review, or sharing. It features a modern UI, AI-assisted file selection, and clipboard integration.
+> **JYMP** (Join Your Multiple Prompts) is a beautiful, interactive CLI tool (currently in **BETA**) to combine selected files from your codebase into a single prompt for LLMs, code review, or sharing. It features a modern UI, AI-assisted file selection, and clipboard integration.
 
 ---
 
@@ -21,6 +24,19 @@
 - ✨ **Modern Banner & UX**: Enjoy a creative, professional CLI experience.
 
 ## Installation
+
+### From npm (Recommended)
+
+```sh
+npm install -g jymp
+```
+
+Then run:
+```sh
+jymp
+```
+
+### From Source
 
 1. Clone this repo:
    ```sh
@@ -43,7 +59,7 @@ Run the CLI from your project root:
 
 ```sh
 node index.js
-# or, if linked globally
+# or, if linked globally or installed from npm
 jymp
 ```
 
