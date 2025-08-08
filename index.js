@@ -187,8 +187,13 @@ const manualFilePicker = async () => {
 // Combine selected files into a single string
 const combineFiles = async (files) => {
   let result = '';
+  // Add all common image extensions to binaryExtensions
+  const imageExtensions = [
+    '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp', '.tiff', '.ico'
+  ];
   const binaryExtensions = [
-    '.exe', '.dll', '.so', '.bin', '.woff', '.woff2', '.ttf', '.eot', '.otf', '.class', '.jar', '.apk', '.dmg', '.iso', '.7z', '.rar', '.psd', '.ai', '.sketch', '.ico', '.icns'
+    ...imageExtensions,
+    '.exe', '.dll', '.so', '.bin', '.woff', '.woff2', '.ttf', '.eot', '.otf', '.class', '.jar', '.apk', '.dmg', '.iso', '.7z', '.rar', '.psd', '.ai', '.sketch', '.icns'
   ];
   const MAX_FILE_SIZE = 1024 * 1024 * 2; // 2MB
 
@@ -241,6 +246,14 @@ process.on('SIGINT', () => {
   console.log('\n' + chalk.bgBlue.white.bold('  👋 Exiting Jymp. Have a productive day!  '));
   process.exit(0);
 });
+
+// Add a stub for aiBasedSelector if not present
+if (typeof aiBasedSelector !== 'function') {
+  globalThis.aiBasedSelector = async () => {
+    console.log(chalk.yellow('AI-based selection is not implemented. Returning all files.'));
+    return await getAllFiles();
+  };
+}
 
 // Main flow
 const main = async () => {
