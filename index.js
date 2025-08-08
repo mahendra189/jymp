@@ -17,6 +17,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import ora from 'ora';
 import gradient from 'gradient-string';
+import cliProgress from 'cli-progress';
 
 // Display Banner with gradient and more info
 console.clear();
@@ -123,6 +124,17 @@ const combineFiles = async (files) => {
     '.pdf', '.zip', '.tar', '.gz', '.mp3', '.mp4', '.mov', '.avi', '.exe', '.dll', '.so', '.bin', '.woff', '.woff2', '.ttf', '.eot', '.otf', '.class', '.jar', '.apk', '.dmg', '.iso', '.7z', '.rar', '.psd', '.ai', '.sketch', '.ico', '.icns'
   ];
   const MAX_FILE_SIZE = 1024 * 1024 * 2; // 2MB
+
+  // Progress bar setup
+  const bar = new cliProgress.SingleBar({
+    format: 'Combining files |' + '{bar}' + '| {percentage}% || {value}/{total} files',
+    barCompleteChar: '\u2588',
+    barIncompleteChar: '\u2591',
+    hideCursor: true
+  }, cliProgress.Presets.shades_classic);
+  bar.start(files.length, 0);
+
+  let i = 0;
   for (const file of files) {
     const ext = path.extname(file).toLowerCase();
     result += `\n// -------- ${file} --------\n`;
@@ -130,10 +142,12 @@ const combineFiles = async (files) => {
       const stat = await fs.stat(file);
       if (binaryExtensions.includes(ext)) {
         result += `[Binary file: ${path.basename(file)}]\n`;
+        bar.increment();
         continue;
       }
       if (stat.size > MAX_FILE_SIZE) {
         result += `[Skipped: File too large (${(stat.size/1024/1024).toFixed(2)} MB)]\n`;
+        bar.increment();
         continue;
       }
       // Try reading as UTF-8, fallback if error
@@ -142,13 +156,16 @@ const combineFiles = async (files) => {
         content = await fs.readFile(file, 'utf-8');
       } catch (e) {
         result += `[Error reading file: ${e.message}]\n`;
+        bar.increment();
         continue;
       }
       result += content + '\n';
     } catch (e) {
       result += `[Error accessing file: ${e.message}]\n`;
     }
+    bar.increment();
   }
+  bar.stop();
   return result;
 };
 
@@ -190,14 +207,13 @@ const main = async () => {
   console.log(chalk.yellow('\nFiles copied to clipboard:'));
   selectedFiles.forEach(f => console.log(chalk.cyan(' - ' + f)));
 
-  // Progress spinner for combining files
-  const spinner = ora('Combining files...').start();
+  // Progress bar for combining files
   let combined = '';
   try {
     combined = await combineFiles(selectedFiles);
-    spinner.succeed('Files combined!');
+    console.log(chalk.green('Files combined!'));
   } catch (e) {
-    spinner.fail('Failed to combine files.');
+    console.log(chalk.red('Failed to combine files.'));
     console.error(e);
     process.exit(1);
   }
