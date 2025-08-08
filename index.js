@@ -26,7 +26,10 @@ console.log(
 const loadIgnoreList = () => {
   try {
     const content = fs.readFileSync('.jympignore', 'utf-8');
-    return content.split('\n').filter(Boolean);
+    return content
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith('#'));
   } catch {
     return [];
   }
@@ -35,8 +38,26 @@ const loadIgnoreList = () => {
 // Get all files (excluding ignored ones)
 const getAllFiles = async () => {
   const ignoreList = loadIgnoreList();
-  const files = await globby(["**/*.*", "!node_modules", ...ignoreList.map(i => `!${i}`)]);
-  return files.filter(f => fs.statSync(f).isFile());
+  // Always ignore node_modules, .git, and hidden files/folders
+  const baseIgnores = [
+    '!node_modules',
+    '!.git',
+    '!.DS_Store',
+    '!.vscode',
+    '!.*', // ignore hidden files/folders
+  ];
+  const files = await globby([
+    '**/*.*',
+    ...baseIgnores,
+    ...ignoreList.map(i => `!${i}`)
+  ]);
+  return files.filter(f => {
+    try {
+      return fs.statSync(f).isFile();
+    } catch {
+      return false;
+    }
+  });
 };
 
 // Prompt user to pick files manually
@@ -75,14 +96,36 @@ const combineFiles = async (files) => {
   let result = '';
   // List of image file extensions
   const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp', '.tiff', '.ico'];
+  // List of common binary file extensions (expand as needed)
+  const binaryExtensions = [
+    ...imageExtensions,
+    '.pdf', '.zip', '.tar', '.gz', '.mp3', '.mp4', '.mov', '.avi', '.exe', '.dll', '.so', '.bin', '.woff', '.woff2', '.ttf', '.eot', '.otf', '.class', '.jar', '.apk', '.dmg', '.iso', '.7z', '.rar', '.psd', '.ai', '.sketch', '.ico', '.icns'
+  ];
+  const MAX_FILE_SIZE = 1024 * 1024 * 2; // 2MB
   for (const file of files) {
     const ext = path.extname(file).toLowerCase();
     result += `\n// -------- ${file} --------\n`;
-    if (imageExtensions.includes(ext)) {
-      result += `[Image file: ${path.basename(file)}]\n`;
-    } else {
-      const content = await fs.readFile(file, 'utf-8');
+    try {
+      const stat = await fs.stat(file);
+      if (binaryExtensions.includes(ext)) {
+        result += `[Binary file: ${path.basename(file)}]\n`;
+        continue;
+      }
+      if (stat.size > MAX_FILE_SIZE) {
+        result += `[Skipped: File too large (${(stat.size/1024/1024).toFixed(2)} MB)]\n`;
+        continue;
+      }
+      // Try reading as UTF-8, fallback if error
+      let content = '';
+      try {
+        content = await fs.readFile(file, 'utf-8');
+      } catch (e) {
+        result += `[Error reading file: ${e.message}]\n`;
+        continue;
+      }
       result += content + '\n';
+    } catch (e) {
+      result += `[Error accessing file: ${e.message}]\n`;
     }
   }
   return result;
