@@ -258,9 +258,12 @@ const aiBasedSelector = async () => {
     }
   ]);
 
-  // Prepare the prompt for the AI
-  const fileList = files.map(f => `- ${f}`).join('\n');
-  const systemPrompt = `You are an expert code assistant. Given a user goal and a list of files, select the most relevant files (max 10) by returning only their file names, one per line.\n\nUser goal: ${userPrompt}\n\nFiles:\n${fileList}\n\nRelevant files:`;
+  // Prepare the prompt for the AI with indices
+  const fileList = files.map((f, i) => `${i + 1}. ${f}`).join('\n');
+  const systemPrompt = `You are an expert code assistant. Given a user goal and a list of files (with indices), select the most relevant files (max 10) by returning only their indices, one per line.\n\nUser goal: ${userPrompt}\n\nFiles:\n${fileList}\n\nRelevant file indices:`;
+
+  // Show loading spinner while waiting for AI
+  const spinner = ora(chalk.cyan('Asking AI to select relevant files...')).start();
 
   // Call OpenRouter API (OpenAI-compatible)
   const fetch = (await import('node-fetch')).default;
@@ -273,26 +276,30 @@ const aiBasedSelector = async () => {
         'Authorization': 'Bearer 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'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-3.5-turbo-instruct',
+        model: 'openai/gpt-3.5-turbo',
         messages: [
           { role: 'system', content: 'You are an expert code assistant.' },
           { role: 'user', content: systemPrompt }
         ],
-        max_tokens: 256,
+        max_tokens: 128,
         temperature: 0.2
       })
     });
     const data = await res.json();
     aiResponse = data.choices?.[0]?.message?.content || '';
+    spinner.succeed(chalk.green('AI response received.'));
   } catch (e) {
-    console.log(chalk.red('AI API error, falling back to manual matching.'));
+    spinner.fail(chalk.red('AI API error, falling back to manual matching.'));
   }
 
-  // Parse AI response for file names
+  // Parse AI response for indices
   let selected = [];
   if (aiResponse) {
     const lines = aiResponse.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    selected = files.filter(f => lines.some(l => f.endsWith(l)));
+    const indices = lines
+      .map(l => parseInt(l.replace(/[^0-9]/g, ''), 10))
+      .filter(n => !isNaN(n) && n >= 1 && n <= files.length);
+    selected = indices.map(i => files[i - 1]);
   }
   // Fallback: simple keyword match or first 5 files
   if (!selected.length) {
