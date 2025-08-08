@@ -212,6 +212,12 @@ const combineFiles = async (files) => {
   return result;
 };
 
+// Custom Ctrl+C handler
+process.on('SIGINT', () => {
+  console.log('\n' + chalk.bgBlue.white.bold('  👋 Exiting Jymp. Have a productive day!  '));
+  process.exit(0);
+});
+
 // Main flow
 const main = async () => {
   const { mode } = await inquirer.prompt([
@@ -246,6 +252,12 @@ const main = async () => {
   else if (mode === 'ai') selectedFiles = await aiBasedSelector();
   else selectedFiles = await manualFilePicker();
 
+  if (!selectedFiles.length) {
+    console.log(chalk.redBright('\n⚠️  No files selected. Nothing to copy.'));
+    console.log(chalk.gray('Tip: Try again and select at least one file or folder.'));
+    process.exit(0);
+  }
+
   // Show the names of files being copied
   console.log(chalk.yellow('\nFiles copied to clipboard:'));
   selectedFiles.forEach(f => console.log(chalk.cyan(' - ' + f)));
@@ -279,6 +291,18 @@ const main = async () => {
   await new Promise(res => setTimeout(res, 400));
 
   console.log(chalk.green(`\n✅ Combined ${selectedFiles.length} files. Prompt copied to clipboard!`));
+  console.log(chalk.gray('💡 Tip: Paste your prompt directly into your favorite LLM or chat window!'));
 };
 
-main();
+// Run main with error handling for inquirer ExitPromptError
+(async () => {
+  try {
+    await main();
+  } catch (err) {
+    if (err && err.name && err.name === 'ExitPromptError') {
+      console.log('\n' + chalk.bgBlue.white.bold('  👋 Exiting Jymp. Have a productive day!  '));
+      process.exit(0);
+    }
+    throw err;
+  }
+})();
