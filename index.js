@@ -18,15 +18,30 @@ import path from 'path';
 import ora from 'ora';
 import gradient from 'gradient-string';
 
-// Display Banner with gradient and better effect
+// Display Banner with gradient and more info
 console.clear();
+// Read package.json for version and author
+let pkg = { version: 'unknown', author: 'unknown' };
+try {
+  const pkgRaw = fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf-8');
+  pkg = JSON.parse(pkgRaw);
+} catch {}
 const jympBanner = figlet.textSync("Jymp", {
-  font: "Big",
+  font: "ANSI Shadow",
   horizontalLayout: "default",
   verticalLayout: "default"
 });
+const border = chalk.gray('='.repeat(60));
+const subtitle = chalk.bold.cyanBright('A CLI tool to compile selected files into a single prompt');
+const version = chalk.bold(`Version: ${pkg.version}`);
+const author = chalk.bold(`Author: ${pkg.author || 'Mahendra'}`);
+const now = chalk.gray('Date: ' + new Date().toLocaleString());
+console.log(border);
 console.log(gradient.pastel.multiline(jympBanner));
-console.log(chalk.bold.cyanBright('A CLI tool to compile selected files into a single prompt\n'));
+console.log(subtitle);
+console.log(version + chalk.gray('   |   ') + author);
+console.log(now);
+console.log(border + '\n');
 
 // Utility to read .jympignore
 const loadIgnoreList = () => {
