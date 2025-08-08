@@ -82,46 +82,88 @@ const getAllFiles = async () => {
   });
 };
 
-// Prompt user to pick files manually
+// Helper to build a tree structure from file paths
+function buildFileTree(paths) {
+  const sep = path.sep;
+  const root = {};
+  for (const p of paths) {
+    const parts = p.split(sep);
+    let node = root;
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (!node[part]) node[part] = (i === parts.length - 1) ? null : {};
+      node = node[part];
+    }
+  }
+  return root;
+}
+
+// Helper to flatten tree to choices for inquirer
+function flattenTree(node, prefix = '', depth = 0) {
+  const choices = [];
+  for (const key of Object.keys(node).sort()) {
+    const value = node[key];
+    const fullPath = prefix ? path.join(prefix, key) : key;
+    if (value === null) {
+      // File
+      choices.push({
+        name: `${'  '.repeat(depth)}📄 ${key}`,
+        value: fullPath,
+        short: key,
+        type: 'file',
+      });
+    } else {
+      // Folder
+      choices.push({
+        name: `${'  '.repeat(depth)}📁 ${key}/`,
+        value: fullPath + '/',
+        short: key + '/',
+        type: 'folder',
+      });
+      choices.push(...flattenTree(value, fullPath, depth + 1));
+    }
+  }
+  return choices;
+}
+
+// Helper to get all files under a folder
+function getFilesUnderFolder(folder, allFiles) {
+  const prefix = folder.endsWith(path.sep) ? folder : folder + path.sep;
+  return allFiles.filter(f => f.startsWith(prefix));
+}
+
+// Prompt user to pick files/folders manually (tree view, compatible with inquirer v12+)
 const manualFilePicker = async () => {
   const files = await getAllFiles();
+  const tree = buildFileTree(files);
+  const choices = flattenTree(tree);
   const { selected } = await inquirer.prompt([
     {
       type: 'checkbox',
       name: 'selected',
-      message: 'Select files to include:',
-      choices: files,
-      pageSize: 30 // Show more file rows
+      message: 'Select files or folders to include:',
+      pageSize: 20,
+      choices: choices,
     }
   ]);
-  return selected;
-};
-
-// Prompt user for AI selection prompt
-const aiBasedSelector = async () => {
-  const files = await getAllFiles();
-  const { userPrompt } = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'userPrompt',
-      message: 'Enter your goal (e.g., I want to debug an auth issue):'
+  // Expand folders to all files under them
+  let finalFiles = new Set();
+  for (const sel of selected) {
+    const isFolder = sel.endsWith('/') || sel.endsWith('\\');
+    if (isFolder) {
+      getFilesUnderFolder(sel.replace(/[/\\]+$/, ''), files).forEach(f => finalFiles.add(f));
+    } else {
+      finalFiles.add(sel);
     }
-  ]);
-
-  // Simulate selection (replace with actual LLM API later)
-  const matched = files.filter(f => userPrompt.toLowerCase().split(' ').some(word => f.toLowerCase().includes(word)));
-  return matched.length ? matched : files.slice(0, 5); // fallback if no match
+  }
+  return Array.from(finalFiles);
 };
 
-// Read and format selected files
+// Combine selected files into a single string
 const combineFiles = async (files) => {
   let result = '';
-  // List of image file extensions
-  const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp', '.tiff', '.ico'];
-  // List of common binary file extensions (expand as needed)
   const binaryExtensions = [
-    ...imageExtensions,
-    '.pdf', '.zip', '.tar', '.gz', '.mp3', '.mp4', '.mov', '.avi', '.exe', '.dll', '.so', '.bin', '.woff', '.woff2', '.ttf', '.eot', '.otf', '.class', '.jar', '.apk', '.dmg', '.iso', '.7z', '.rar', '.psd', '.ai', '.sketch', '.ico', '.icns'
+    '.exe', '.dll', '.so', '.bin', '.woff', '.woff2', '.ttf', '.eot', '.otf', '.class', '.jar', '.apk', '.dmg', '.iso', '.7z', '.rar', '.psd', '.ai', '.sketch', '.ico', '.icns'
   ];
   const MAX_FILE_SIZE = 1024 * 1024 * 2; // 2MB
 
