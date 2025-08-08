@@ -32,6 +32,15 @@ const jympBanner = figlet.textSync("Jymp", {
   horizontalLayout: "default",
   verticalLayout: "default"
 });
+
+// Creative horizontal acronym for JYMP
+const acronymHorizontal =
+  chalk.green('📦 Join') + '   ' +
+  chalk.yellow('📂 Your') + '   ' +
+  chalk.cyan('📄 Multiple') + '   ' +
+  chalk.magenta('🧠 Prompts');
+
+// Border and subtitle
 const border = chalk.gray('='.repeat(60));
 const subtitle = chalk.bold.cyanBright('A CLI tool to compile selected files into a single prompt');
 const version = chalk.bold(`Version: ${pkg.version}`);
@@ -39,6 +48,7 @@ const author = chalk.bold(`Author: ${pkg.author || 'Mahendra'}`);
 const now = chalk.gray('Date: ' + new Date().toLocaleString());
 console.log(border);
 console.log(gradient.pastel.multiline(jympBanner));
+console.log(acronymHorizontal);
 console.log(subtitle);
 console.log(version + chalk.gray('   |   ') + author);
 console.log(now);
