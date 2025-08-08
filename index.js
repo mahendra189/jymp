@@ -158,6 +158,8 @@ const main = async () => {
   selectedFiles.forEach(f => console.log(chalk.cyan(' - ' + f)));
 
   const combined = await combineFiles(selectedFiles);
+  // Show context length for LLM
+  console.log(chalk.magenta(`\nLLM context length: ${combined.length.toLocaleString()} characters`));
   clipboardy.writeSync(combined);
 
   console.log(chalk.green(`\n✅ Combined ${selectedFiles.length} files. Prompt copied to clipboard!`));
