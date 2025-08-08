@@ -99,8 +99,20 @@ function buildFileTree(paths) {
 }
 
 // Helper to flatten tree to choices for inquirer
-function flattenTree(node, prefix = '', depth = 0) {
+function flattenTree(node, prefix = '', depth = 0, isTop = true) {
   const choices = [];
+  if (isTop) {
+    // Add legend and section header
+    choices.push(new inquirer.Separator(chalk.bold.cyan('─ File/Folder Selection ─')));
+    choices.push(new inquirer.Separator(chalk.gray('Legend: ') + chalk.yellow('📁 Folder') + chalk.gray(' | ') + chalk.green('📄 File')));
+    choices.push({
+      name: chalk.bgGreen.black.bold('  Select ALL files and folders  '),
+      value: '__SELECT_ALL__',
+      short: 'ALL',
+      type: 'all',
+    });
+    choices.push(new inquirer.Separator(' '));
+  }
   for (const key of Object.keys(node).sort()) {
     const value = node[key];
     const fullPath = prefix ? path.join(prefix, key) : key;
@@ -108,7 +120,7 @@ function flattenTree(node, prefix = '', depth = 0) {
     if (value === null) {
       // File
       choices.push({
-        name: `${indent}📄 ${key}`,
+        name: `${indent}${chalk.green('📄')} ${chalk.whiteBright.bold(key)}`,
         value: fullPath,
         short: key,
         type: 'file',
@@ -116,13 +128,14 @@ function flattenTree(node, prefix = '', depth = 0) {
     } else {
       // Folder
       choices.push({
-        name: `${indent}📁 ${key}/`,
+        name: `${indent}${chalk.yellow('📁')} ${chalk.yellowBright.bold(key + '/')}`,
         value: fullPath + '/',
         short: key + '/',
         type: 'folder',
       });
-      choices.push(...flattenTree(value, fullPath, depth + 1));
+      choices.push(...flattenTree(value, fullPath, depth + 1, false));
     }
+    if (isTop) choices.push(new inquirer.Separator(' ')); // Divider between top-level
   }
   return choices;
 }
@@ -137,18 +150,29 @@ function getFilesUnderFolder(folder, allFiles) {
 const manualFilePicker = async () => {
   const files = await getAllFiles();
   const tree = buildFileTree(files);
-  const choices = flattenTree(tree);
+  let choices = flattenTree(tree);
   const { selected } = await inquirer.prompt([
     {
       type: 'checkbox',
       name: 'selected',
-      message: 'Select files or folders to include:',
+      message: chalk.bold.cyan('Select files or folders to include (use space to select, arrows to navigate):'),
       pageSize: 20,
       choices: choices,
+      loop: false,
+      validate: (answer) => {
+        if (answer.includes('__SELECT_ALL__')) return true;
+        if (answer.length === 0) return chalk.red('Please select at least one file or folder.');
+        return true;
+      }
     }
   ]);
-  // Expand folders to all files under them
+  // Handle Select All
   let finalFiles = new Set();
+  if (selected.includes('__SELECT_ALL__')) {
+    files.forEach(f => finalFiles.add(f));
+    return Array.from(finalFiles);
+  }
+  // Expand folders to all files under them
   for (const sel of selected) {
     const isFolder = sel.endsWith('/') || sel.endsWith('\\');
     if (isFolder) {
