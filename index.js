@@ -206,19 +206,17 @@ const combineFiles = async (files) => {
   }, cliProgress.Presets.shades_classic);
   bar.start(files.length, 0);
 
-  let i = 0;
   for (const file of files) {
     const ext = path.extname(file).toLowerCase();
-    result += `\n// -------- ${file} --------\n`;
     try {
       const stat = await fs.stat(file);
       if (binaryExtensions.includes(ext)) {
-        result += `[Binary file: ${path.basename(file)}]\n`;
+        result += `\n// -------- ${file} --------\n[Binary file: ${path.basename(file)}]\n`;
         bar.increment();
         continue;
       }
       if (stat.size > MAX_FILE_SIZE) {
-        result += `[Skipped: File too large (${(stat.size/1024/1024).toFixed(2)} MB)]\n`;
+        result += `\n// -------- ${file} --------\n[Skipped: File too large (${(stat.size/1024/1024).toFixed(2)} MB)]\n`;
         bar.increment();
         continue;
       }
@@ -227,13 +225,15 @@ const combineFiles = async (files) => {
       try {
         content = await fs.readFile(file, 'utf-8');
       } catch (e) {
-        result += `[Error reading file: ${e.message}]\n`;
+        result += `\n// -------- ${file} --------\n[Error reading file: ${e.message}]\n`;
         bar.increment();
         continue;
       }
+      const lineCount = content.split(/\r?\n/).length;
+      result += `\n// -------- ${file} (${lineCount} lines) --------\n`;
       result += content + '\n';
     } catch (e) {
-      result += `[Error accessing file: ${e.message}]\n`;
+      result += `\n// -------- ${file} --------\n[Error accessing file: ${e.message}]\n`;
     }
     bar.increment();
   }
@@ -317,6 +317,20 @@ if (typeof aiBasedSelector !== 'function') {
   };
 }
 
+// Utility to get line count or binary label for a file
+async function getFileLineInfo(file, binaryExtensions) {
+  const ext = path.extname(file).toLowerCase();
+  try {
+    if (binaryExtensions.includes(ext)) return 'binary';
+    const stat = await fs.stat(file);
+    if (stat.size > 1024 * 1024 * 2) return 'too large';
+    const content = await fs.readFile(file, 'utf-8');
+    return content.split(/\r?\n/).length + ' lines';
+  } catch {
+    return 'unreadable';
+  }
+}
+
 // Main flow
 const main = async () => {
   const { mode } = await inquirer.prompt([
@@ -357,9 +371,21 @@ const main = async () => {
     process.exit(0);
   }
 
-  // Show the names of files being copied
+  // Show the names of files being copied, with line counts
+  const imageExtensions = [
+    '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp', '.tiff', '.ico'
+  ];
+  const binaryExtensions = [
+    ...imageExtensions,
+    '.exe', '.dll', '.so', '.bin', '.woff', '.woff2', '.ttf', '.eot', '.otf', '.class', '.jar', '.apk', '.dmg', '.iso', '.7z', '.rar', '.psd', '.ai', '.sketch', '.icns'
+  ];
   console.log(chalk.yellow('\nFiles copied to clipboard:'));
-  selectedFiles.forEach(f => console.log(chalk.cyan(' - ' + f)));
+  const fileInfos = await Promise.all(selectedFiles.map(f => getFileLineInfo(f, binaryExtensions)));
+  selectedFiles.forEach((f, i) => {
+    const info = fileInfos[i];
+    let label = info === 'binary' ? chalk.gray('(binary)') : info === 'too large' ? chalk.gray('(too large)') : info === 'unreadable' ? chalk.red('(unreadable)') : chalk.gray(`(${info})`);
+    console.log(chalk.cyan(' - ' + f), label);
+  });
 
   // Progress bar for combining files
   let combined = '';
