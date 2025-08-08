@@ -158,12 +158,24 @@ const main = async () => {
     {
       type: 'list',
       name: 'mode',
-      message: 'Choose selection mode:',
+      message: chalk.bold.cyan('✨ Choose selection mode:'),
       choices: [
-        { name: 'Full Codebase', value: 'full' },
-        { name: 'Prompt-Based (AI-assisted)', value: 'ai' },
-        { name: 'Manual File Selection', value: 'manual' },
-        { name: 'Exit', value: 'exit' }
+        {
+          name: `${chalk.green('📦  Full Codebase')}  ${chalk.gray('- Combine all files (except ignored)')}`,
+          value: 'full'
+        },
+        {
+          name: `${chalk.blue('🤖  Prompt-Based (AI-assisted)')}  ${chalk.gray('- Let AI suggest files based on your goal')}`,
+          value: 'ai'
+        },
+        {
+          name: `${chalk.yellow('📝  Manual File Selection')}  ${chalk.gray('- Pick files yourself')}`,
+          value: 'manual'
+        },
+        {
+          name: `${chalk.red('❌  Exit')}`,
+          value: 'exit'
+        }
       ]
     }
   ]);
