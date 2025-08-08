@@ -15,12 +15,18 @@ import clipboardy from 'clipboardy';
 import {globby} from 'globby';
 import fs from 'fs-extra';
 import path from 'path';
+import ora from 'ora';
+import gradient from 'gradient-string';
 
-// Display Banner
+// Display Banner with gradient and better effect
 console.clear();
-console.log(
-  chalk.cyan(figlet.textSync("Jymp", { horizontalLayout: "default" }))
-);
+const jympBanner = figlet.textSync("Jymp", {
+  font: "Big",
+  horizontalLayout: "default",
+  verticalLayout: "default"
+});
+console.log(gradient.pastel.multiline(jympBanner));
+console.log(chalk.bold.cyanBright('A CLI tool to compile selected files into a single prompt\n'));
 
 // Utility to read .jympignore
 const loadIgnoreList = () => {
@@ -157,10 +163,34 @@ const main = async () => {
   console.log(chalk.yellow('\nFiles copied to clipboard:'));
   selectedFiles.forEach(f => console.log(chalk.cyan(' - ' + f)));
 
-  const combined = await combineFiles(selectedFiles);
+  // Progress spinner for combining files
+  const spinner = ora('Combining files...').start();
+  let combined = '';
+  try {
+    combined = await combineFiles(selectedFiles);
+    spinner.succeed('Files combined!');
+  } catch (e) {
+    spinner.fail('Failed to combine files.');
+    console.error(e);
+    process.exit(1);
+  }
+
   // Show context length for LLM
   console.log(chalk.magenta(`\nLLM context length: ${combined.length.toLocaleString()} characters`));
-  clipboardy.writeSync(combined);
+
+  // Progress spinner for copying to clipboard
+  const spinner2 = ora('Copying to clipboard...').start();
+  try {
+    clipboardy.writeSync(combined);
+    spinner2.succeed('Copied to clipboard!');
+  } catch (e) {
+    spinner2.fail('Failed to copy to clipboard.');
+    console.error(e);
+    process.exit(1);
+  }
+
+  // Small delay for effect
+  await new Promise(res => setTimeout(res, 400));
 
   console.log(chalk.green(`\n✅ Combined ${selectedFiles.length} files. Prompt copied to clipboard!`));
 };
