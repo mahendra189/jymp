@@ -102,6 +102,10 @@ const main = async () => {
   else if (mode === 'ai') selectedFiles = await aiBasedSelector();
   else selectedFiles = await manualFilePicker();
 
+  // Show the names of files being copied
+  console.log(chalk.yellow('\nFiles copied to clipboard:'));
+  selectedFiles.forEach(f => console.log(chalk.cyan(' - ' + f)));
+
   const combined = await combineFiles(selectedFiles);
   clipboardy.writeSync(combined);
 
