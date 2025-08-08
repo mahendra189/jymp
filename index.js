@@ -104,10 +104,11 @@ function flattenTree(node, prefix = '', depth = 0) {
   for (const key of Object.keys(node).sort()) {
     const value = node[key];
     const fullPath = prefix ? path.join(prefix, key) : key;
+    const indent = '    '.repeat(depth); // 4 spaces per level for more space
     if (value === null) {
       // File
       choices.push({
-        name: `${'  '.repeat(depth)}📄 ${key}`,
+        name: `${indent}📄 ${key}`,
         value: fullPath,
         short: key,
         type: 'file',
@@ -115,7 +116,7 @@ function flattenTree(node, prefix = '', depth = 0) {
     } else {
       // Folder
       choices.push({
-        name: `${'  '.repeat(depth)}📁 ${key}/`,
+        name: `${indent}📁 ${key}/`,
         value: fullPath + '/',
         short: key + '/',
         type: 'folder',
