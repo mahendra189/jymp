@@ -1,13 +1,4 @@
 #!/usr/bin/env node
-// jymp - A CLI tool to compile selected files into a single prompt
-// Author: Mahendra
-// Tech Stack: Node.js + Inquirer + Chalk + Figlet + Clipboardy
-
-// STEP 0: Dependencies Setup (Run this first)
-// npm init -y
-// npm install inquirer chalk figlet clipboardy globby fs-extra
-
-// STEP 1: index.js
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import figlet from 'figlet';
@@ -23,7 +14,7 @@ import { compressContent } from './compress.js';
 // Display Banner with gradient and more info
 console.clear();
 // Read package.json for version and author
-let pkg = { version: 'unknown', author: 'unknown' };
+let pkg = { version: '1.1.0', author: 'Mahendrakumar' };
 try {
   const pkgRaw = fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf-8');
   pkg = JSON.parse(pkgRaw);
@@ -45,7 +36,7 @@ const acronymHorizontal =
 const border = chalk.gray('='.repeat(60));
 const subtitle = chalk.bold.cyanBright('A CLI tool to compile selected files into a single prompt');
 const version = chalk.bold(`Version: ${pkg.version}`);
-const author = chalk.bold(`Author: ${pkg.author || 'Mahendra'}`);
+const author = chalk.bold(`Author: ${pkg.author || 'Mahendrakumar'}`);
 const now = chalk.gray('Date: ' + new Date().toLocaleString());
 const betaLabel = chalk.bgYellow.black.bold('  BETA  ');
 console.log(betaLabel.padStart(10));
