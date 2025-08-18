@@ -18,6 +18,7 @@ import path from 'path';
 import ora from 'ora';
 import gradient from 'gradient-string';
 import cliProgress from 'cli-progress';
+import { compressContent } from './compress.js';
 
 // Display Banner with gradient and more info
 console.clear();
@@ -241,6 +242,9 @@ const combineFiles = async (files) => {
         bar.increment();
         continue;
       }
+      if (combineFiles.compress) {
+        content = compressContent(content, ext);
+      }
       const lineCount = content.split(/\r?\n/).length;
       result += `\n// -------- ${file} (${lineCount} lines) --------\n`;
       result += content + '\n';
@@ -382,6 +386,17 @@ const main = async () => {
     console.log(chalk.gray('Tip: Try again and select at least one file or folder.'));
     process.exit(0);
   }
+
+  // Ask for compression
+  const { compress } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'compress',
+      message: chalk.bold.cyan('Enable compression to reduce token count? (removes comments, whitespace, minifies code)'),
+      default: false
+    }
+  ]);
+  combineFiles.compress = compress;
 
   // Show the names of files being copied, with line counts
   const imageExtensions = [

@@ -19,7 +19,9 @@
     "gradient-string": "^3.0.0",
     "inquirer": "^12.9.0",
     "node-fetch": "^3.3.2",
-    "ora": "^8.2.0"
+    "ora": "^8.2.0",
+    "strip-comments": "^2.0.1",
+    "uglify-js": "^3.19.3"
   },
   "bin": {
     "jymp": "./index.js"
