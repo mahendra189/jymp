@@ -3,7 +3,7 @@ import inquirer from 'inquirer';
 import chalk from 'chalk';
 import figlet from 'figlet';
 import clipboardy from 'clipboardy';
-import {globby} from 'globby';
+import { globby } from 'globby';
 import fs from 'fs-extra';
 import path from 'path';
 import ora from 'ora';
@@ -13,12 +13,17 @@ import { compressContent } from './compress.js';
 
 // Display Banner with gradient and more info
 console.clear();
-// Read package.json for version and author
-let pkg = { version: '1.1.0', author: 'Mahendrakumar' };
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+let pkg = { version: 'Unknown', author: 'Mahendrakumar' };
 try {
-  const pkgRaw = fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf-8');
+  const pkgRaw = fs.readFileSync(path.join(__dirname, 'package.json'), 'utf-8');
   pkg = JSON.parse(pkgRaw);
-} catch {}
+} catch { }
+
+
 const jympBanner = figlet.textSync("Jymp", {
   font: "ANSI Shadow",
   horizontalLayout: "default",
@@ -220,7 +225,7 @@ const combineFiles = async (files) => {
         continue;
       }
       if (stat.size > MAX_FILE_SIZE) {
-        result += `\n// -------- ${file} --------\n[Skipped: File too large (${(stat.size/1024/1024).toFixed(2)} MB)]\n`;
+        result += `\n// -------- ${file} --------\n[Skipped: File too large (${(stat.size / 1024 / 1024).toFixed(2)} MB)]\n`;
         bar.increment();
         continue;
       }
