@@ -75,7 +75,7 @@ jymp
 
 ### Example
 
-![JYMP Screenshot](assets/screenshot1.png)
+![JYMP Screenshot](https://raw.githubusercontent.com/mahendra189/jymp/refs/heads/main/assets/screenshot1.png)
 
 ## .jympignore
 
@@ -93,8 +93,8 @@ Add file/folder patterns to `.jympignore` to exclude them from selection (like `
 
 We’d love your feedback to make **JYMP** better! 🚀
 
-* 🐞 **Report Bugs**: Found something broken? Open an issue here: [JYMP Issues](https://github.com/mahendra189/jymp-issues/issues)
-* ✨ **Request Features**: Have an idea to improve JYMP? Share it here: [JYMP Issues](https://github.com/mahendra189/jymp-issues/issues)
+* 🐞 **Report Bugs**: Found something broken? Open an issue here: [JYMP](https://github.com/mahendra189/jymp/issues)
+* ✨ **Request Features**: Have an idea to improve JYMP? Share it here: [JYMP Issues](https://github.com/mahendra189/jymp/issues)
 
 When submitting, please try to follow this format:
 
@@ -113,7 +113,7 @@ When submitting, please try to follow this format:
 * Proposed Solution (optional)
 * Alternatives considered (if any)
 
-👉 All issues and requests should be submitted in our [dedicated issues repo](https://github.com/mahendra189/jymp-issues).
+👉 All issues and requests should be submitted in our [dedicated issues repo](https://github.com/mahendra189/jymp).
 
 ---
 
